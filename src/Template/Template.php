@@ -196,7 +196,7 @@ class Template
     public function layout($name, array $data = array())
     {
         $this->layoutName = $name;
-        $this->layoutData = $data;
+        $this->layoutData = $data ?: $this->data;
     }
 
     /**
