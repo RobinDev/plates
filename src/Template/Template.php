@@ -311,9 +311,9 @@ class Template
      * @param  array  $data
      * @return string
      */
-    public function fetch($name, array $data = array())
+    public function fetch($name, array $data = array(), $only = false)
     {
-        return $this->engine->render($name, $data);
+        return $this->engine->render($name, $only ? $data : array_merge($this->data, $data));
     }
 
     /**
