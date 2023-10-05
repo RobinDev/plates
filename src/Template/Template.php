@@ -171,6 +171,7 @@ class Template
 
             $content = ob_get_clean();
 
+            // this layout name is defined after rendering template file so we can't (yet) render layout file before
             if (isset($this->layoutName)) {
                 $layout = $this->engine->make($this->layoutName);
                 $layout->sections = array_merge($this->sections, array('content' => $content));
@@ -218,6 +219,9 @@ class Template
 
         $this->sectionName = $name;
 
+        if ($this->mustStopRenderingSection())
+            return;
+
         ob_start();
     }
 
@@ -245,6 +249,14 @@ class Template
         $this->start($name);
     }
 
+    private function mustStopRenderingSection(): bool
+    {
+        if (isset($this->sections[$this->sectionName]) && $this->sectionMode == self::SECTION_MODE_REWRITE)
+            return true;
+
+        return false;
+    }
+
     /**
      * Stop the current section block.
      * @return null
@@ -256,6 +268,9 @@ class Template
                 'You must start a section before you can stop it.'
             );
         }
+
+        if ($this->mustStopRenderingSection())
+            return;
 
         if (!isset($this->sections[$this->sectionName])) {
             $this->sections[$this->sectionName] = '';
