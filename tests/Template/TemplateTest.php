@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 
 class TemplateTest extends TestCase
 {
+    /** @var Template */
     private $template;
 
     protected function setUp(): void
@@ -172,13 +173,12 @@ class TemplateTest extends TestCase
     {
         vfsStream::create(
             array(
-                'template.php' => implode('\n', array(
-                    '<?php $this->layout("layout")?><?php $this->start("test") ?>Hello World<?php $this->stop() ?>',
-                    '<?php $this->layout("layout")?><?php $this->start("test") ?>See this instead!<?php $this->stop() ?>',
-                )),
-                'layout.php' => '<?php echo $this->section("test") ?>',
+                'template.php' => '<?php $this->layout("template2")?><?php $this->start("test") ?>See this instead!<?php $this->stop() ?>',
+                'template2.php' => '<?php $this->layout("layout")?><?php $this->start("test") ?>Hello World<?php $this->stop() ?>',
+                'layout.php' => '<?php echo $this->section("test", "initial content") ?>',
             )
         );
+
 
         $this->assertSame('See this instead!', $this->template->render());
     }
