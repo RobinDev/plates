@@ -1,6 +1,5 @@
 <?php
 
-include __DIR__.'/../vendor/autoload.php';
 
 use League\Plates\RectorizeTemplate;
 use Rector\Config\RectorConfig;
