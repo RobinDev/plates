@@ -327,7 +327,7 @@ class Template
 
     /**
      * Fetch a rendered template.
-     * @param  string $name|TemplateClassInterface
+     * @param  string|TemplateClassInterface $name
      * @param  array  $data
      * @return string
      */
@@ -338,7 +338,7 @@ class Template
 
     /**
      * Output a rendered template.
-     * @param  string $name|TemplateClassInterface
+     * @param  string|TemplateClassInterface $name
      * @param  array  $data
      * @return null
      */
