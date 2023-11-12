@@ -72,8 +72,6 @@ class Template
      */
     protected $layoutData;
 
-    protected bool $spaceLess = false;
-
     /**
      * Create new Template instance.
      * @param Engine $engine
@@ -165,7 +163,7 @@ class Template
             $level = ob_get_level();
             ob_start();
             $this->display();
-            $content = $this->spaceLess ? trim(preg_replace('/>\s+</', '><', ob_get_clean())) : ob_get_clean();
+            $content = ob_get_clean();
 
             if (isset($this->layoutName)) {
                 $layout = $this->engine->make($this->layoutName);
@@ -404,11 +402,4 @@ class Template
         return $this->escape($string, $functions);
     }
 
-    /**
-     * TODO: document
-     */
-    public function displaySpaceLess(bool $spaceLess = true):void
-    {
-        $this->spaceLess = $spaceLess;
-    }
 }
