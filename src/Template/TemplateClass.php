@@ -67,6 +67,12 @@ class TemplateClass extends Template
                 continue;
             }
 
+            if ($parameter->getName() === 'f') {
+                $parametersToAutowire['f'] = [$this, 'fetch'];
+
+                continue;
+            }
+
             $parametersToAutowire[$parameter->getName()] = $this->data()[$parameter->getName()] ?? $parameter->getDefaultValue() ?? null;
         }
 
@@ -83,6 +89,7 @@ class TemplateClass extends Template
             }
             if ($propertyName === 'template') {
                 $this->templateClass->template = $this;
+                continue;
             }
 
             $this->templateClass->$propertyName = $this->data[$propertyName] ?? null;
