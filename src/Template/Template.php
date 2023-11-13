@@ -240,25 +240,27 @@ class Template
     /**
      * Start a new section block in APPEND mode.
      * @param  string $name
-     * @return null
+     * @return bool
      */
     public function push($name)
     {
         $this->appendSection = true; /* for backward compatibility */
         $this->sectionMode = self::SECTION_MODE_APPEND;
         $this->start($name);
+        return true;
     }
 
     /**
      * Start a new section block in PREPEND mode.
      * @param  string $name
-     * @return null
+     * @return bool
      */
     public function unshift($name)
     {
         $this->appendSection = false; /* for backward compatibility */
         $this->sectionMode = self::SECTION_MODE_PREPEND;
         $this->start($name);
+        return true;
     }
 
     /**
