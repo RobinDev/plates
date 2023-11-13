@@ -347,32 +347,45 @@ class Template
      * <?php } ?>
      * Alternative To : <?= $this->section('exampleSection', 'Default Content') ?>
      * + Feature : works with push and unshift
+     * + could be used with defaultValue inline too : <?(=|php) $this->startSection('exampleSection', 'Default Content') ?>
      *
      * @param  string      $name    Section name
-     * @return bool
+     * @param  string      $default Default section content
+     * @return bool|string string if default is setted
      */
-    public function startSection($name)
+    public function startSection($name, $default = null)
     {
         if (isset($this->sections[$name])) {
             if ($this->getSectionMode($name) === self::SECTION_MODE_REWRITE) {
                 echo $this->sections[$name];
 
-                return false;
+                return  $default !== null ? '' : false;
             }
 
             if ($this->getSectionMode($name) === self::SECTION_MODE_PREPEND) {
                 echo $this->sections[$name];
 
-                return true;
+                if ($default !== null) {
+                    echo $default;
+                }
+
+                return  $default !== null ? '' : true;
             }
             if ($this->getSectionMode($name) === self::SECTION_MODE_APPEND) {
                 $this->sectionMode = self::SECTION_MODE_PREPEND;
                 $this->start($name);
-                return true;
+
+
+                if ($default !== null) {
+                    echo $default;
+                    $this->stopSection();
+                }
+
+                return $default !== null ? '' : true;
             }
         }
 
-        return true;
+        return  $default !== null ? '' : true;
     }
 
     /**
