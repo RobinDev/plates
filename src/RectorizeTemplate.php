@@ -11,11 +11,14 @@ use League\Plates\Template\TemplateClassInterface;
 use PhpParser\Comment\Doc;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Name;
 use PhpParser\Node\Param;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\UnionType;
+use PHPStan\Type\NullType;
+use PHPStan\Type\Type;
 use Rector\Core\PhpParser\Printer\BetterStandardPrinter;
 use Rector\Core\Rector\AbstractRector;
 use Rector\Core\ValueObject\MethodName;
@@ -29,18 +32,11 @@ use Symplify\RuleDocGenerator\ValueObject\RuleDefinition;
  */
 final class RectorizeTemplate extends AbstractRector
 {
-    private const CLASS_TO_NOT_ADD_IN_CONSTRUCTOR = [Template::class, TemplateClass::class, DoNotAddItInConstructorInterface::class];
+    public const CLASS_TO_NOT_ADD_IN_CONSTRUCTOR = [Template::class, TemplateClass::class, DoNotAddItInConstructorInterface::class];
 
-    /**
-     * @readonly
-     *
-     * @var ParamTypeResolver
-     */
-    private $paramTypeResolver;
-
-    public function __construct(ParamTypeResolver $paramTypeResolver)
-    {
-        $this->paramTypeResolver = $paramTypeResolver;
+    public function __construct(
+        private readonly ParamTypeResolver $paramTypeResolver
+    ) {
     }
 
     public function getRuleDefinition(): RuleDefinition
@@ -85,7 +81,7 @@ CODE_SAMPLE
      */
     public function refactor(Node $node): ?Node
     {
-        $implementedInterfaces = array_map(fn (Name $interface) => $interface->toString(), $node->implements);
+        $implementedInterfaces = array_map(static fn (Name $interface): string => $interface->toString(), $node->implements);
         if (! \in_array(TemplateClassInterface::class, $implementedInterfaces, true)) {
             return null;
         }
@@ -104,7 +100,7 @@ CODE_SAMPLE
         $methodDocBlock = $displayMethod?->getDocComment()?->getText() ?? '';
         foreach ($displayMethod->params as $parameter) {
             $paramType = $this->paramTypeResolver->resolve($parameter);
-            if ($paramType instanceof FullyQualifiedObjectType && $this->mustAddObjectInConstructor($paramType)) {
+            if ($paramType instanceof FullyQualifiedObjectType && ! $this->mustAddObjectInConstructor($paramType)) {
                 continue;
             }
 
@@ -116,10 +112,11 @@ CODE_SAMPLE
             $cloneParameter = clone $parameter;
             $cloneParameter->flags = 1;
 
-            if ($parameter->default instanceof Expr) {
-                if (! $this->hasNullType($paramType) && $parameter->default instanceof \PhpParser\Node\Expr\ConstFetch && $this->hasNullValue($parameter)) {
-                    $this->addTypeToParameter($cloneParameter, 'null');
-                }
+            if ($parameter->default instanceof Expr
+                && (! $this->hasNullType($paramType)
+                && $parameter->default instanceof ConstFetch
+                && $this->hasNullValue($parameter))) {
+                $this->addTypeToParameter($cloneParameter, 'null');
             }
 
             $paramsForConstructor[] = $cloneParameter;
@@ -139,7 +136,7 @@ CODE_SAMPLE
         $this->removeConstructor($node);
 
         $constructor = new ClassMethod('__construct', [
-            'flags' => Node\Stmt\Class_::MODIFIER_PUBLIC,
+            'flags' => Class_::MODIFIER_PUBLIC,
             'params' => $paramsForConstructor,
         ]);
         $constructor->setDocComment($newDocBlockConstructor);
@@ -149,9 +146,9 @@ CODE_SAMPLE
         return $node;
     }
 
-    private function hasNullType(\PHPStan\Type\Type $type): bool
+    private function hasNullType(Type $type): bool
     {
-        if ($type instanceof \PHPStan\Type\NullType) {
+        if ($type instanceof NullType) {
             return true;
         }
 
@@ -170,17 +167,13 @@ CODE_SAMPLE
     {
         $text = (new BetterStandardPrinter())->print($param);
 
-        if (str_ends_with($text, 'null')) {
-            return true;
-        }
-
-        return false;
+        return str_ends_with($text, 'null');
     }
 
     private function removeConstructor(Class_ $class): null
     {
         foreach ($class->stmts as $key => $stmt) {
-            if ($stmt instanceof Node\Stmt\ClassMethod && MethodName::CONSTRUCT === $stmt->name->toString()) {
+            if ($stmt instanceof ClassMethod && MethodName::CONSTRUCT === $stmt->name->toString()) {
                 unset($class->stmts[$key]);
 
                 break;
@@ -229,14 +222,14 @@ CODE_SAMPLE
 
         if ($existingType instanceof \PHPStan\Type\UnionType) {
             $existingTypes = $existingType->getTypes();
-            $newTypes = [...$existingTypes, new \PHPStan\Type\NullType()];
+            $newTypes = [...$existingTypes, new NullType()];
             $param->type = new UnionType($newTypes);
 
             return;
         }
 
         if (null === $existingType) {
-            $param->type = new \PHPStan\Type\NullType();
+            $param->type = new NullType();
 
             return;
         }
