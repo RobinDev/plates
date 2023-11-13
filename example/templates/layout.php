@@ -8,5 +8,10 @@
 
 <?=$this->section('scripts')?>
 
+
+<?php if ($this->startSection('footer')) { ?>
+    footer
+<?php } $this->stopSection(); ?>
+
 </body>
 </html>

@@ -10,3 +10,7 @@
         // Some JavaScript
     </script>
 <?php $this->end() ?>
+
+<?php $this->push('footer') ?>
+    <br>Profile Footer
+<?php $this->end() ?>
