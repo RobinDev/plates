@@ -24,6 +24,11 @@ class Template
     protected $sectionMode = self::SECTION_MODE_REWRITE;
 
     /**
+     * @var array<string, int> where string is section name and int sectionMode
+     */
+    protected $sectionsMode = [];
+
+    /**
      * Instance of the template engine.
      * @var Engine
      */
@@ -174,6 +179,7 @@ class Template
             if (isset($this->layoutName)) {
                 $layout = $this->engine->make($this->layoutName);
                 $layout->sections = array_merge($this->sections, array('content' => $content));
+                $layout->sectionsMode = array_merge($layout->sectionsMode, $this->sectionsMode);
                 $content = $layout->render($this->layoutData);
             }
 
@@ -229,7 +235,7 @@ class Template
     public function push($name)
     {
         $this->appendSection = true; /* for backward compatibility */
-        $this->sectionMode = self::SECTION_MODE_APPEND;
+        $this->sectionMode = $this->sectionsMode[$name] = self::SECTION_MODE_APPEND;
         $this->start($name);
     }
 
@@ -241,7 +247,7 @@ class Template
     public function unshift($name)
     {
         $this->appendSection = false; /* for backward compatibility */
-        $this->sectionMode = self::SECTION_MODE_PREPEND;
+        $this->sectionMode = $this->sectionsMode[$name] = self::SECTION_MODE_PREPEND;
         $this->start($name);
     }
 
@@ -303,6 +309,63 @@ class Template
         }
 
         return $this->sections[$name];
+    }
+
+    private function getSectionMode($name): int
+    {
+        return $this->sectionsMode[$name] ?? self::SECTION_MODE_REWRITE;
+    }
+
+    /**
+     * Echo the content for a section block else return bool.
+     *
+     * Usage :
+     * <?php if ($this->startSection('exampleSection')) { ?>
+     *  Default Content
+     * <?php } ?>
+     * Alternative To : <?= $this->section('exampleSection', 'Default Content') ?>
+     * + Feature : works with push and unshift
+     *
+     * @param  string      $name    Section name
+     * @return bool
+     */
+    public function startSection($name)
+    {
+        if (isset($this->sections[$name])) {
+            if ($this->getSectionMode($name) === self::SECTION_MODE_REWRITE) {
+                echo $this->sections[$name];
+
+                return false;
+            }
+
+            if ($this->getSectionMode($name) === self::SECTION_MODE_PREPEND) {
+                echo $this->sections[$name];
+
+                return true;
+            }
+            if ($this->getSectionMode($name) === self::SECTION_MODE_APPEND) {
+                $this->sectionMode = self::SECTION_MODE_PREPEND;
+                $this->start($name);
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @return ,null
+     */
+    public function stopSection() {
+        if ($this->sectionName === null) {
+            return;
+        }
+
+        $name = $this->sectionName;
+        $this->stop();
+        echo $this->sections[$name];
     }
 
     /**
