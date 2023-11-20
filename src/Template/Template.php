@@ -409,7 +409,7 @@ class Template
      * @param  array  $data
      * @return string
      */
-    public function fetch($name, array $data = array(), bool $useTemplateData = false)
+    public function fetch($name, array $data = array(), bool $useTemplateData = true)
     {
         return $this->engine->render($name, $useTemplateData ? array_merge($this->data, $data) : $data);
     }
