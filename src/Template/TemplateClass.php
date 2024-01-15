@@ -86,7 +86,8 @@ class TemplateClass extends Template
                 continue;
             }
 
-            $parametersToAutowire[$parameter->getName()] = $this->data()[$parameter->getName()] ?? $parameter->getDefaultValue() ?? null;
+            $parametersToAutowire[$parameter->getName()] = $this->data()[$parameter->getName()]
+                ?? ($parameter->isDefaultValueAvailable() ? $parameter->getDefaultValue() : null);
         }
 
         return $parametersToAutowire;

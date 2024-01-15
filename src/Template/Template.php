@@ -420,7 +420,7 @@ class Template
      * @param  array  $data
      * @return null
      */
-    public function insert($name, array $data = array(), bool $useTemplateData = false)
+    public function insert($name, array $data = array(), bool $useTemplateData = true)
     {
         echo $this->fetch($name, $data, $useTemplateData);
     }
